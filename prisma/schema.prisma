@@ -1,0 +1,56 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Influencer {
+  id        String              @id @default(uuid())
+  name      String
+  gender    String?
+  createdAt DateTime            @default(now())
+  metadata  InfluencerMetadata?
+  prices    Price[]
+}
+
+model InfluencerMetadata {
+  id             String     @id @default(uuid())
+  influencerId   String     @unique
+  tierId         String
+  location       String
+  primaryGenreId String
+  influencer     Influencer @relation(fields: [influencerId], references: [id])
+  primaryGenre   Genre      @relation(fields: [primaryGenreId], references: [id])
+  tier           Tier       @relation(fields: [tierId], references: [id])
+
+  @@index([tierId])
+  @@index([location])
+  @@index([primaryGenreId])
+}
+
+model Genre {
+  id          String               @id @default(uuid())
+  name        String               @unique
+  influencers InfluencerMetadata[]
+}
+
+model Price {
+  id           String     @id @default(uuid())
+  influencerId String
+  priceCents   Int
+  currency     String     @default("USD")
+  bookingType  String?
+  influencer   Influencer @relation(fields: [influencerId], references: [id])
+
+  @@index([influencerId])
+  @@index([priceCents])
+}
+
+model Tier {
+  id          String               @id @default(uuid())
+  name        String               @unique
+  influencers InfluencerMetadata[]
+}

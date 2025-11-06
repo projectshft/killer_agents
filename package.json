@@ -1,26 +1,43 @@
 {
-  "name": "killer_agents",
-  "version": "0.1.0",
-  "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
-  },
-  "dependencies": {
-    "react": "19.2.0",
-    "react-dom": "19.2.0",
-    "next": "16.0.1"
-  },
-  "devDependencies": {
-    "typescript": "^5",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "@tailwindcss/postcss": "^4",
-    "tailwindcss": "^4",
-    "eslint": "^9",
-    "eslint-config-next": "16.0.1"
-  }
+	"name": "killer_agents",
+	"version": "0.1.0",
+	"private": true,
+	"scripts": {
+		"dev": "next dev",
+		"build": "next build",
+		"start": "next start",
+		"lint": "eslint"
+	},
+	"prisma": {
+		"seed": "tsx prisma/seed.ts"
+	},
+	"dependencies": {
+		"@google/genai": "^1.29.0",
+		"@google/generative-ai": "^0.24.1",
+		"@prisma/client": "^6.19.0",
+		"next": "16.0.1",
+		"prisma": "^6.19.0",
+		"puppeteer": "^24.29.0",
+		"react": "19.2.0",
+		"react-dom": "19.2.0",
+		"react-markdown": "^10.1.0",
+		"serpapi": "^2.2.1",
+		"zod-to-json-schema": "^3.24.6"
+	},
+	"devDependencies": {
+		"@faker-js/faker": "^9.2.0",
+		"@tailwindcss/postcss": "^4",
+		"@tailwindcss/typography": "^0.5.19",
+		"@types/node": "^20",
+		"@types/react": "^19",
+		"@types/react-dom": "^19",
+		"eslint": "^9",
+		"eslint-config-next": "16.0.1",
+		"openai": "^6.8.1",
+		"tailwindcss": "^4",
+		"tsx": "^4.20.6",
+		"typescript": "^5",
+		"zod": "^3.24.2"
+	},
+	"packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }
