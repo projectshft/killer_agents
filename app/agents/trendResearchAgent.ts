@@ -58,7 +58,7 @@ Format your response in a readable way with paragraphs and bullet points where a
 	`;
 
 	const response = await ai.models.generateContent({
-		model: 'gemini-2.0-flash-exp',
+		model: 'gemini-2.0-flash',
 		contents: prompt,
 	});
 
