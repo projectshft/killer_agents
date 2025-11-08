@@ -9,6 +9,10 @@ This project demonstrates a multi-agent system that routes queries to specialize
 - **Trend Research Agent**: Research TikTok trends and content ideas
 - **TikTok Sound Finder Agent** (Student Challenge): Find TikTok music/sound links for specific songs
 
+## Video Walkthrough
+
+[Live Walkthrough Video](https://share.descript.com/view/23ai09Rp381)
+
 ## Prerequisites
 
 - Node.js 20.x or higher
@@ -145,7 +149,7 @@ prisma/
 
 ## Student Challenge: TikTok Sound Finder Agent
 
-See [STUDENT_CHALLENGE.md](./STUDENT_CHALLENGE.md) for a guided 1-hour challenge to build a new agent.
+See [TODOS.md](./TODOS.md) for a guided 1-hour challenge to build a new agent.
 
 **What you'll build**: An agent that finds TikTok music/sound links for specific songs using SerpAPI.
 
@@ -233,6 +237,26 @@ This is an educational project. Feel free to:
 ## License
 
 MIT License - feel free to use this for learning and teaching!
+
+---
+
+## Want to Go Deeper?
+
+If you enjoyed building this agent system and want to take your AI development skills to the next level, check out [Parsity's 30-Day AI Dev Cohort](https://parsity.io/AIDev).
+
+**What you'll learn:**
+- RAG (Retrieval-Augmented Generation) agents
+- LLM operations and deployment
+- Linear algebra fundamentals for ML
+- Model fine-tuning techniques
+
+**What you'll get:**
+- Live support and office hours
+- Build an amazing portfolio project or startup idea
+- Learn from experienced AI engineers
+- Join a community of web developers leveling up their AI skills
+
+Perfect for web developers who want to become AI engineers.
 
 ---
 
