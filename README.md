@@ -260,4 +260,4 @@ Perfect for web developers who want to become AI engineers.
 
 ---
 
-**Built with ❤️ for learning about AI agents**
+**Built for learning about AI agents**
