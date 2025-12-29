@@ -7,7 +7,7 @@ An AI-powered agent system for TikTok influencer marketing and trend research. B
 This project demonstrates a multi-agent system that routes queries to specialized agents:
 - **Database Search Agent**: Query influencers by tier, genre, location, and price
 - **Trend Research Agent**: Research TikTok trends and content ideas
-- **TikTok Sound Finder Agent** (Student Challenge): Find TikTok music/sound links for specific songs
+- **YouTube Video Finder Agent** (Student Challenge): Find YouTube videos on any topic
 
 ## Video Walkthrough
 
@@ -120,7 +120,7 @@ app/
 │   ├── executeAgent.ts          # Main router agent
 │   ├── databaseSearchAgent.ts   # Database queries
 │   ├── trendResearchAgent.ts    # Trend research
-│   ├── soundFinderAgent.ts      # Student challenge (to implement)
+│   ├── videoFinderAgent.ts      # Student challenge (to implement)
 │   └── agentTypes.ts            # Type definitions
 ├── libs/
 │   ├── gemini.ts                # Gemini AI client
@@ -147,11 +147,11 @@ prisma/
 - "Trending fitness content ideas"
 - "Popular hashtags for beauty campaigns"
 
-## Student Challenge: TikTok Sound Finder Agent
+## Student Challenge: YouTube Video Finder Agent
 
-See [TODOS.md](./TODOS.md) for a guided 1-hour challenge to build a new agent.
+See [TODOS.md](./TODOS.md) for a guided challenge to build a new agent.
 
-**What you'll build**: An agent that finds TikTok music/sound links for specific songs using SerpAPI.
+**What you'll build**: An agent that finds YouTube videos on any topic using SerpAPI and Gemini AI.
 
 ## Database Schema
 
