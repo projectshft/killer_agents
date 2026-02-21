@@ -1,6 +1,6 @@
 export type AgentAction = {
-	action: 'trendResearch' | 'databaseSearch' | 'none';
-	nextAgent?: 'trendResearch' | 'databaseSearch';
+	action: 'databaseSearch';
+	nextAgent?: 'databaseSearch';
 	originalQuery: string;
 	agentQuery: string;
 };

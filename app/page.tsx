@@ -1,75 +1,131 @@
 'use client';
 
 import { useState } from 'react';
-import { executeAgent } from './actions';
+import { executeAgent, type ExecuteAgentResult } from './agents/executeAgent';
 import ReactMarkdown from 'react-markdown';
+import { Influencer } from '@prisma/client';
+import { deleteInfluencersAction } from './actions/deleteInfluencersAction';
 
 export default function Home() {
 	const [query, setQuery] = useState('');
-	const [agent, setAgent] = useState<string | null>(null);
-	const [result, setResult] = useState<string | null>(null);
+	const [agentResult, setAgentResult] = useState<ExecuteAgentResult | null>(
+		null,
+	);
 	const [isLoading, setIsLoading] = useState(false);
 
 	const handleSubmit = async () => {
 		if (!query.trim()) return;
 
 		setIsLoading(true);
-		setAgent(null);
-		setResult(null);
+		setAgentResult(null);
 
 		try {
 			const result = await executeAgent(query);
-			setAgent(result.agent);
-			setResult(result.message);
+			setAgentResult(result);
 		} catch (error) {
 			console.error('Error:', error);
-			setResult('An error occurred while processing your request.');
+			setAgentResult({
+				message: 'An error occurred while processing your request.',
+				isDestructive: false,
+				influencers: [],
+				agent: 'error',
+			});
 		} finally {
 			setIsLoading(false);
 		}
 	};
 
+	const handleDestructiveSubmit = async () => {
+		if (!agentResult?.isDestructive) return;
+
+		setIsLoading(true);
+		setAgentResult(null);
+
+		const deletedInfluencers = await deleteInfluencersAction(
+			agentResult?.influencers ?? [],
+		);
+		if (deletedInfluencers > 0) {
+			setAgentResult({
+				message: `Influencers deleted successfully: ${deletedInfluencers}`,
+				isDestructive: false,
+				influencers: [],
+				agent: 'deleteInfluencersAction',
+			});
+		}
+	};
+
 	return (
-		<div className='flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black'>
-			<main className='flex min-h-screen w-full max-w-3xl flex-col gap-8 py-32 px-16'>
+		<div className='flex min-h-screen items-center justify-center bg-black font-mono text-green-400'>
+			<main className='flex min-h-screen w-full max-w-3xl flex-col gap-8 px-8 py-16'>
 				<div className='flex flex-col gap-4'>
-					<h1 className='text-3xl font-semibold text-black dark:text-zinc-50'>
-						Social Media Agent
-					</h1>
+					<div className='flex items-center justify-between'>
+						<h1 className='text-3xl font-semibold tracking-wide text-green-300'>
+							Creator Database Terminal
+							<span
+								className='as400-cursor'
+								aria-hidden='true'
+							/>
+						</h1>
+					</div>
 					<textarea
 						value={query}
 						onChange={(e) => setQuery(e.target.value)}
 						placeholder='Enter your query...'
-						className='min-h-[200px] w-full rounded-lg border border-zinc-300 bg-white p-4 text-black dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50'
+						className='as400-input min-h-[200px] w-full border border-green-600 bg-black p-4 text-green-300 placeholder:text-green-700 focus:outline-none focus:ring-1 focus:ring-green-500'
 					/>
 					<button
 						onClick={handleSubmit}
 						disabled={isLoading}
-						className='h-12 rounded-full bg-black px-6 font-medium text-white transition-colors hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-50 dark:text-black dark:hover:bg-zinc-200'
+						className='h-12 border border-green-500 bg-black px-6 font-medium text-green-300 transition-colors hover:bg-green-950 disabled:opacity-50'
 					>
 						{isLoading ? 'Processing...' : 'Submit'}
 					</button>
 				</div>
 
-				{agent && (
+				{agentResult?.agent && (
 					<div className='flex flex-col gap-2'>
-						<h2 className='text-xl font-semibold text-black dark:text-zinc-50'>
-							Agent:
+						<h2 className='text-xl font-semibold text-green-300'>
+							Agent
 						</h2>
-						<span className='inline-block w-fit rounded-full bg-zinc-200 px-4 py-2 text-sm font-medium text-black dark:bg-zinc-800 dark:text-zinc-50'>
-							{agent}
+						<span className='inline-block w-fit border border-green-600 bg-black px-4 py-2 text-sm font-medium text-green-300'>
+							{agentResult.agent}
 						</span>
 					</div>
 				)}
 
-				{result && (
-					<div className='flex flex-col gap-4 rounded-lg border border-zinc-300 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900'>
-						<h2 className='text-xl font-semibold text-black dark:text-zinc-50'>
+				{agentResult?.message && (
+					<div className='flex flex-col gap-4 border border-green-600 bg-black p-6'>
+						<h2 className='text-xl font-semibold text-green-300'>
 							Results
 						</h2>
-						<div className='prose prose-zinc dark:prose-invert max-w-none text-zinc-700 dark:text-zinc-300'>
-							<ReactMarkdown>{result}</ReactMarkdown>
+						<div className='prose prose-invert max-w-none text-green-300'>
+							<ReactMarkdown>{agentResult.message}</ReactMarkdown>
 						</div>
+					</div>
+				)}
+				{agentResult?.isDestructive && (
+					<div className='flex flex-col gap-2'>
+						<h2 className='text-xl font-semibold text-green-300'>
+							Are you sure you want to proceed? You will not be
+							able to undo this action. This will delete the
+							following influencers:
+							{agentResult?.influencers?.map(
+								(influencer: Influencer) => (
+									<div key={influencer.id}>
+										{influencer.name}
+									</div>
+								),
+							)}
+						</h2>
+						<button
+							onClick={handleDestructiveSubmit}
+							disabled={isLoading}
+							className='h-12 border border-red-500 bg-black px-6 font-medium text-red-300 transition-colors hover:bg-red-950 disabled:opacity-50'
+						>
+							{isLoading
+								? 'Processing...'
+								: 'Click to delete these influencers'}
+						</button>
 					</div>
 				)}
 			</main>

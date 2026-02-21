@@ -1,49 +1,43 @@
 -- CreateTable
 CREATE TABLE "Influencer" (
-    "id" TEXT NOT NULL,
+    "id" TEXT NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL,
     "gender" TEXT,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "Influencer_pkey" PRIMARY KEY ("id")
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- CreateTable
 CREATE TABLE "InfluencerMetadata" (
-    "id" TEXT NOT NULL,
+    "id" TEXT NOT NULL PRIMARY KEY,
     "influencerId" TEXT NOT NULL,
     "tierId" TEXT NOT NULL,
     "location" TEXT NOT NULL,
     "primaryGenreId" TEXT NOT NULL,
-
-    CONSTRAINT "InfluencerMetadata_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "InfluencerMetadata_influencerId_fkey" FOREIGN KEY ("influencerId") REFERENCES "Influencer" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT "InfluencerMetadata_primaryGenreId_fkey" FOREIGN KEY ("primaryGenreId") REFERENCES "Genre" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT "InfluencerMetadata_tierId_fkey" FOREIGN KEY ("tierId") REFERENCES "Tier" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
 -- CreateTable
 CREATE TABLE "Genre" (
-    "id" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-
-    CONSTRAINT "Genre_pkey" PRIMARY KEY ("id")
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "name" TEXT NOT NULL
 );
 
 -- CreateTable
 CREATE TABLE "Price" (
-    "id" TEXT NOT NULL,
+    "id" TEXT NOT NULL PRIMARY KEY,
     "influencerId" TEXT NOT NULL,
     "priceCents" INTEGER NOT NULL,
     "currency" TEXT NOT NULL DEFAULT 'USD',
     "bookingType" TEXT,
-
-    CONSTRAINT "Price_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "Price_influencerId_fkey" FOREIGN KEY ("influencerId") REFERENCES "Influencer" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
 -- CreateTable
 CREATE TABLE "Tier" (
-    "id" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-
-    CONSTRAINT "Tier_pkey" PRIMARY KEY ("id")
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "name" TEXT NOT NULL
 );
 
 -- CreateIndex
@@ -69,15 +63,3 @@ CREATE INDEX "Price_priceCents_idx" ON "Price"("priceCents");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Tier_name_key" ON "Tier"("name");
-
--- AddForeignKey
-ALTER TABLE "InfluencerMetadata" ADD CONSTRAINT "InfluencerMetadata_influencerId_fkey" FOREIGN KEY ("influencerId") REFERENCES "Influencer"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "InfluencerMetadata" ADD CONSTRAINT "InfluencerMetadata_tierId_fkey" FOREIGN KEY ("tierId") REFERENCES "Tier"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "InfluencerMetadata" ADD CONSTRAINT "InfluencerMetadata_primaryGenreId_fkey" FOREIGN KEY ("primaryGenreId") REFERENCES "Genre"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "Price" ADD CONSTRAINT "Price_influencerId_fkey" FOREIGN KEY ("influencerId") REFERENCES "Influencer"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

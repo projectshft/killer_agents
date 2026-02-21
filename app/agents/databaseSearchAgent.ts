@@ -22,6 +22,57 @@ const sqlSchema = z.object({
 		),
 });
 
+type SqlProps = z.infer<typeof sqlSchema>;
+
+const constructWhereClause = (
+	sqlProps: SqlProps,
+): Prisma.InfluencerWhereInput => {
+	const metadataWhere: Prisma.InfluencerMetadataWhereInput = {};
+
+	if (sqlProps.genre) {
+		metadataWhere.primaryGenre = {
+			name: sqlProps.genre,
+		};
+	}
+
+	if (sqlProps.location) {
+		metadataWhere.location = {
+			contains: sqlProps.location.trim(),
+		};
+	}
+
+	if (sqlProps.tier) {
+		metadataWhere.tier = {
+			name: sqlProps.tier,
+		};
+	}
+
+	const whereClause: Prisma.InfluencerWhereInput = {};
+
+	if (Object.keys(metadataWhere).length > 0) {
+		whereClause.metadata = metadataWhere;
+	}
+
+	if (sqlProps.influencerName) {
+		whereClause.name = {
+			contains: sqlProps.influencerName,
+		};
+	}
+
+	if (sqlProps.price) {
+		whereClause.prices = {
+			some: {
+				priceCents: {
+					lte: sqlProps.price * 100,
+				},
+			},
+		};
+	}
+
+	console.log(JSON.stringify(whereClause, null, 2));
+	return whereClause;
+};
+
 export const databaseSearchAgent = async (
 	agentAction: AgentAction,
 ): Promise<{
@@ -77,48 +128,7 @@ export const databaseSearchAgent = async (
 	const responseText = response.text || '{}';
 	const parsed = JSON.parse(responseText);
 	const sqlProps = sqlSchema.parse(parsed);
-
-	const metadataWhere: Prisma.InfluencerMetadataWhereInput = {};
-
-	if (sqlProps?.genre) {
-		metadataWhere.primaryGenre = {
-			name: sqlProps.genre,
-		};
-	}
-
-	if (sqlProps?.location) {
-		metadataWhere.location = {
-			contains: sqlProps.location.trim(),
-		};
-	}
-
-	if (sqlProps?.tier) {
-		metadataWhere.tier = {
-			name: sqlProps.tier,
-		};
-	}
-
-	const whereClause: Prisma.InfluencerWhereInput = {};
-
-	if (Object.keys(metadataWhere).length > 0) {
-		whereClause.metadata = metadataWhere;
-	}
-
-	if (sqlProps?.influencerName) {
-		whereClause.name = {
-			contains: sqlProps.influencerName,
-		};
-	}
-
-	if (sqlProps?.price) {
-		whereClause.prices = {
-			some: {
-				priceCents: {
-					lte: sqlProps.price * 100,
-				},
-			},
-		};
-	}
+	const whereClause = constructWhereClause(sqlProps);
 
 	const influencers = await prisma.influencer.findMany({
 		where: whereClause,
@@ -146,7 +156,7 @@ export const databaseSearchAgent = async (
 		const genreName = inf.metadata?.primaryGenre?.name || 'Unknown';
 		const location = inf.metadata?.location || 'Unknown';
 
-		return `• ${inf.name} - ${tierName} tier, ${genreName} genre, ${location}. Starting price: ${priceStr}`;
+		return `• ${inf.name} - ${tierName} tier, ${genreName} genre, ${location}. Starting price: ${priceStr} \n\n`;
 	});
 
 	return {
