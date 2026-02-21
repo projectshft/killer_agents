@@ -28,44 +28,25 @@ export const databaseSearchAgent = async (
 	message: string;
 	isDestructive: boolean;
 	influencers?: Influencer[];
-	rawSql?: string;
 }> => {
-	if (!agentAction?.agentQuery) {
-		return {
-			message: 'Invalid query provided',
-			isDestructive: false,
-			influencers: [],
-		};
-	}
-
-	let uniqueGenres: Array<{ name: string }> = [];
-	let tiers: Array<{ name: string }> = [];
-	let locations: Array<{ location: string }> = [];
-
-	try {
-		uniqueGenres = await prisma.genre.findMany({
-			select: { name: true },
-		});
-	} catch {
-		uniqueGenres = [];
-	}
-
-	try {
-		tiers = await prisma.tier.findMany({
-			select: { name: true },
-		});
-	} catch {
-		tiers = [];
-	}
-
-	try {
-		locations = await prisma.influencerMetadata.findMany({
-			select: { location: true },
-			distinct: ['location'],
-		});
-	} catch {
-		locations = [];
-	}
+	const [uniqueGenres, tiers, locations] = await Promise.all([
+		prisma.genre
+			.findMany({
+				select: { name: true },
+			})
+			.catch(() => [] as Array<{ name: string }>),
+		prisma.tier
+			.findMany({
+				select: { name: true },
+			})
+			.catch(() => [] as Array<{ name: string }>),
+		prisma.influencerMetadata
+			.findMany({
+				select: { location: true },
+				distinct: ['location'],
+			})
+			.catch(() => [] as Array<{ location: string }>),
+	]);
 
 	const locationList = locations
 		.slice(0, 20)
@@ -74,56 +55,28 @@ export const databaseSearchAgent = async (
 		.join(', ');
 
 	const prompt = `
-Extract search parameters from: "${agentAction.agentQuery}"
+		Extract search parameters from: "${agentAction.agentQuery}"
 
-Genres: ${uniqueGenres.map((g) => g.name).join(', ')}
-Tiers: ${tiers.map((t) => t.name).join(', ')}
-Locations: ${locationList}${locations.length > 20 ? '...' : ''}
+		Genres: ${uniqueGenres.map((g) => g.name).join(', ')}
+		Tiers: ${tiers.map((t) => t.name).join(', ')}
+		Locations (examples): ${locationList}${locations.length > 20 ? '...' : ''}
 
-Extract: price (number), influencerName, tier, genre, location, isDestructive (true if deleting/removing).
+		Extract: price (number), influencerName, tier, genre, location, isDestructive (true if deleting/removing).
+		For location, return the location text from the user query (city, state, or country), not only exact full DB values.
 	`;
 
-	let sqlProps;
-	try {
-		const response = await ai.models.generateContent({
-			model: 'gemini-2.5-flash',
-			contents: prompt,
-			config: {
-				responseMimeType: 'application/json',
-				responseJsonSchema: zodToJsonSchema(sqlSchema),
-			},
-		});
+	const response = await ai.models.generateContent({
+		model: 'gemini-2.5-flash',
+		contents: prompt,
+		config: {
+			responseMimeType: 'application/json',
+			responseJsonSchema: zodToJsonSchema(sqlSchema),
+		},
+	});
 
-		const responseText = response.text || '{}';
-		const parsed = JSON.parse(responseText);
-		sqlProps = sqlSchema.parse(parsed);
-	} catch (error: unknown) {
-		const err = error as { status?: number; message?: string };
-
-		if (err?.status === 429 || err?.message?.includes('quota')) {
-			return {
-				message:
-					'⚠️  Gemini API quota exceeded. Please wait a moment and try again, or upgrade your API key to a paid tier.\n\nAvailable data:\n' +
-					`Genres: ${uniqueGenres.map((g) => g.name).join(', ')}\n` +
-					`Tiers: ${tiers.map((t) => t.name).join(', ')}\n` +
-					`Locations: ${locations
-						.slice(0, 20)
-						.map((l) => l.location)
-						.join(', ')}`,
-				isDestructive: false,
-				influencers: [],
-			};
-		}
-
-		sqlProps = {
-			price: null,
-			influencerName: null,
-			tier: null,
-			genre: null,
-			location: null,
-			isDestructive: false,
-		};
-	}
+	const responseText = response.text || '{}';
+	const parsed = JSON.parse(responseText);
+	const sqlProps = sqlSchema.parse(parsed);
 
 	const metadataWhere: Prisma.InfluencerMetadataWhereInput = {};
 
@@ -133,8 +86,10 @@ Extract: price (number), influencerName, tier, genre, location, isDestructive (t
 		};
 	}
 
-	if (sqlProps?.location && typeof sqlProps.location === 'string') {
-		metadataWhere.location = sqlProps.location;
+	if (sqlProps?.location) {
+		metadataWhere.location = {
+			contains: sqlProps.location.trim(),
+		};
 	}
 
 	if (sqlProps?.tier) {
@@ -164,51 +119,6 @@ Extract: price (number), influencerName, tier, genre, location, isDestructive (t
 			},
 		};
 	}
-
-	const escapeSqlLiteral = (value: string) => value.replace(/'/g, "''");
-
-	const rawSqlParts: string[] = [];
-	rawSqlParts.push(
-		'SELECT i.* FROM "Influencer" i',
-		'LEFT JOIN "InfluencerMetadata" im ON im."influencerId" = i."id"',
-		'LEFT JOIN "Genre" g ON g."id" = im."primaryGenreId"',
-		'LEFT JOIN "Tier" t ON t."id" = im."tierId"',
-	);
-
-	const rawWhere: string[] = [];
-
-	if (sqlProps?.genre) {
-		rawWhere.push(`g."name" = '${escapeSqlLiteral(sqlProps.genre)}'`);
-	}
-
-	if (sqlProps?.location) {
-		rawWhere.push(
-			`im."location" = '${escapeSqlLiteral(sqlProps.location)}'`,
-		);
-	}
-
-	if (sqlProps?.tier) {
-		rawWhere.push(`t."name" = '${escapeSqlLiteral(sqlProps.tier)}'`);
-	}
-
-	if (sqlProps?.influencerName) {
-		rawWhere.push(
-			`i."name" ILIKE '%${escapeSqlLiteral(sqlProps.influencerName)}%'`,
-		);
-	}
-
-	if (sqlProps?.price) {
-		rawWhere.push(
-			`EXISTS (SELECT 1 FROM "Price" p WHERE p."influencerId" = i."id" AND p."priceCents" <= ${Math.floor(sqlProps.price * 100)})`,
-		);
-	}
-
-	if (rawWhere.length > 0) {
-		rawSqlParts.push(`WHERE ${rawWhere.join(' AND ')}`);
-	}
-
-	rawSqlParts.push('LIMIT 10;');
-	const rawSql = rawSqlParts.join('\n');
 
 	const influencers = await prisma.influencer.findMany({
 		where: whereClause,
@@ -243,6 +153,5 @@ Extract: price (number), influencerName, tier, genre, location, isDestructive (t
 		message: `Found ${influencers.length} influencers:\n\n${results.join('\n')}`,
 		isDestructive: sqlProps?.isDestructive ?? false,
 		influencers,
-		rawSql,
 	};
 };
