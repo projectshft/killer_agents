@@ -15,6 +15,50 @@ const sqlSchema = z.object({
 	location: z.string().optional().nullable(),
 });
 
+type SqlProps = z.infer<typeof sqlSchema>;
+
+const constructWhereClause = (
+	sqlProps: SqlProps,
+): Prisma.InfluencerWhereInput => {
+	const metadataWhere: Prisma.InfluencerMetadataWhereInput = {};
+
+	if (sqlProps.genre) {
+		metadataWhere.primaryGenre = { name: sqlProps.genre };
+	}
+
+	if (sqlProps.location) {
+		metadataWhere.location = sqlProps.location;
+	}
+
+	if (sqlProps.tier) {
+		metadataWhere.tier = { name: sqlProps.tier };
+	}
+
+	const whereClause: Prisma.InfluencerWhereInput = {};
+
+	if (Object.keys(metadataWhere).length > 0) {
+		whereClause.metadata = metadataWhere;
+	}
+
+	if (sqlProps.influencerName) {
+		whereClause.name = {
+			contains: sqlProps.influencerName,
+		};
+	}
+
+	if (sqlProps.price) {
+		whereClause.prices = {
+			some: {
+				priceCents: {
+					lte: sqlProps.price * 100,
+				},
+			},
+		};
+	}
+
+	return whereClause;
+};
+
 export const databaseSearchAgent = async (agentAction: AgentAction) => {
 	const uniqueGenres = await prisma.genre.findMany({
 		select: { name: true },
@@ -51,46 +95,7 @@ Extract:
 	const sqlProps = sqlSchema.parse(JSON.parse(responseText));
 	console.log('Database Search Agent - Parsed:', sqlProps);
 
-	const metadataWhere: Prisma.InfluencerMetadataWhereInput = {};
-
-	if (sqlProps?.genre) {
-		metadataWhere.primaryGenre = {
-			name: sqlProps.genre,
-		};
-	}
-
-	if (sqlProps?.location) {
-		metadataWhere.location = sqlProps.location;
-	}
-
-	if (sqlProps?.tier) {
-		metadataWhere.tier = {
-			name: sqlProps.tier,
-		};
-	}
-
-	const whereClause: Prisma.InfluencerWhereInput = {};
-
-	if (Object.keys(metadataWhere).length > 0) {
-		whereClause.metadata = metadataWhere;
-	}
-
-	if (sqlProps?.influencerName) {
-		whereClause.name = {
-			contains: sqlProps.influencerName,
-			mode: 'insensitive',
-		};
-	}
-
-	if (sqlProps?.price) {
-		whereClause.prices = {
-			some: {
-				priceCents: {
-					lte: sqlProps.price * 100,
-				},
-			},
-		};
-	}
+	const whereClause = constructWhereClause(sqlProps);
 
 	const influencers = await prisma.influencer.findMany({
 		where: whereClause,
