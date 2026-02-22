@@ -51,6 +51,7 @@ export default function Home() {
 				influencers: [],
 				agent: 'deleteInfluencersAction',
 			});
+			setIsLoading(false);
 		}
 	};
 
@@ -61,10 +62,7 @@ export default function Home() {
 					<div className='flex items-center justify-between'>
 						<h1 className='text-3xl font-semibold tracking-wide text-green-300'>
 							Creator Database Terminal
-							<span
-								className='as400-cursor'
-								aria-hidden='true'
-							/>
+							<span className='as400-cursor' aria-hidden='true' />
 						</h1>
 					</div>
 					<textarea

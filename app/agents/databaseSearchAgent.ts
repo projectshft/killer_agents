@@ -69,7 +69,6 @@ const constructWhereClause = (
 		};
 	}
 
-	console.log(JSON.stringify(whereClause, null, 2));
 	return whereClause;
 };
 

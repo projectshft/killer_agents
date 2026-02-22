@@ -22,7 +22,7 @@ model InfluencerMetadata {
   tierId         String
   location       String
   primaryGenreId String
-  influencer     Influencer @relation(fields: [influencerId], references: [id])
+  influencer     Influencer @relation(fields: [influencerId], references: [id], onDelete: Cascade)
   primaryGenre   Genre      @relation(fields: [primaryGenreId], references: [id])
   tier           Tier       @relation(fields: [tierId], references: [id])
 
@@ -43,7 +43,7 @@ model Price {
   priceCents   Int
   currency     String     @default("USD")
   bookingType  String?
-  influencer   Influencer @relation(fields: [influencerId], references: [id])
+  influencer   Influencer @relation(fields: [influencerId], references: [id], onDelete: Cascade)
 
   @@index([influencerId])
   @@index([priceCents])

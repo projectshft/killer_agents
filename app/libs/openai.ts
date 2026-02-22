@@ -8,3 +8,8 @@ export const openai = new OpenAI({
 	apiKey: process.env.GEMINI_API_KEY!,
 	baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai',
 });
+
+export const deepseek = new OpenAI({
+	apiKey: process.env.DEEPSEEK_API_KEY!,
+	baseURL: 'https://api.deepseek.com/v1',
+});
