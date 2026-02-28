@@ -3,8 +3,6 @@
 import { useState } from 'react';
 import { executeAgent, type ExecuteAgentResult } from './agents/executeAgent';
 import ReactMarkdown from 'react-markdown';
-import { Influencer } from '@prisma/client';
-import { deleteInfluencersAction } from './actions/deleteInfluencersAction';
 
 export default function Home() {
 	const [query, setQuery] = useState('');
@@ -31,26 +29,6 @@ export default function Home() {
 				agent: 'error',
 			});
 		} finally {
-			setIsLoading(false);
-		}
-	};
-
-	const handleDestructiveSubmit = async () => {
-		if (!agentResult?.isDestructive) return;
-
-		setIsLoading(true);
-		setAgentResult(null);
-
-		const deletedInfluencers = await deleteInfluencersAction(
-			agentResult?.influencers ?? [],
-		);
-		if (deletedInfluencers > 0) {
-			setAgentResult({
-				message: `Influencers deleted successfully: ${deletedInfluencers}`,
-				isDestructive: false,
-				influencers: [],
-				agent: 'deleteInfluencersAction',
-			});
 			setIsLoading(false);
 		}
 	};
@@ -99,31 +77,6 @@ export default function Home() {
 						<div className='prose prose-invert max-w-none text-green-300'>
 							<ReactMarkdown>{agentResult.message}</ReactMarkdown>
 						</div>
-					</div>
-				)}
-				{agentResult?.isDestructive && (
-					<div className='flex flex-col gap-2'>
-						<h2 className='text-xl font-semibold text-green-300'>
-							Are you sure you want to proceed? You will not be
-							able to undo this action. This will delete the
-							following influencers:
-							{agentResult?.influencers?.map(
-								(influencer: Influencer) => (
-									<div key={influencer.id}>
-										{influencer.name}
-									</div>
-								),
-							)}
-						</h2>
-						<button
-							onClick={handleDestructiveSubmit}
-							disabled={isLoading}
-							className='h-12 border border-red-500 bg-black px-6 font-medium text-red-300 transition-colors hover:bg-red-950 disabled:opacity-50'
-						>
-							{isLoading
-								? 'Processing...'
-								: 'Click to delete these influencers'}
-						</button>
 					</div>
 				)}
 			</main>

@@ -143,6 +143,24 @@ export const databaseSearchAgent = async (
 		take: 10,
 	});
 
+	// Handle destructive operations directly
+	if (sqlProps?.isDestructive) {
+		const influencerIds = influencers.map((inf) => inf.id);
+		await prisma.influencer.deleteMany({
+			where: {
+				id: {
+					in: influencerIds,
+				},
+			},
+		});
+
+		return {
+			message: `Deleted ${influencers.length} influencers matching the query.`,
+			isDestructive: true,
+			influencers: [],
+		};
+	}
+
 	const results = influencers.map((inf) => {
 		const minPrice =
 			inf.prices.length > 0
