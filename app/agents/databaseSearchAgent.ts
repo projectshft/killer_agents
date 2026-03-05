@@ -157,7 +157,7 @@ export const databaseSearchAgent = async (
 		return {
 			message: `Deleted ${influencers.length} influencers matching the query.`,
 			isDestructive: true,
-			influencers: [],
+			influencers,
 		};
 	}
 
