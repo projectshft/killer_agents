@@ -21,6 +21,24 @@ This project demonstrates a multi-agent system that routes queries to specialize
 
 ## Quick Start
 
+### Automated Setup (Recommended)
+
+Run the automated setup script:
+
+```bash
+./setup-from-scratch.sh
+```
+
+This will guide you through the entire setup process. Then verify everything works:
+
+```bash
+./verify-setup.sh
+```
+
+### Manual Setup
+
+If you prefer to set up manually:
+
 ### 1. Clone and Install
 
 ```bash
@@ -41,8 +59,8 @@ GEMINI_API_KEY=your_gemini_key_here
 # Required: Get your SerpAPI key for trend research
 SERP_API_KEY=your_serpapi_key_here
 
-# Database URL (shared for students - read-only access)
-DATABASE_URL="postgresql://neondb_owner:npg_Rt2Mena8ZVwA@ep-billowing-shape-a4a0p4zw-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+# Database URL (uses local SQLite database)
+DATABASE_URL="file:./dev.db"
 ```
 
 ### 3. Get API Keys
@@ -65,42 +83,20 @@ DATABASE_URL="postgresql://neondb_owner:npg_Rt2Mena8ZVwA@ep-billowing-shape-a4a0
 
 ### 4. Database Setup
 
-**Option A: Use Shared Database (Recommended for Workshop)**
+This project uses SQLite for a simple, local database setup. No external database service required!
 
-The `DATABASE_URL` provided above connects to a pre-seeded database with 1000 influencers.
-
-Simply run:
-```bash
-npx prisma generate
-```
-
-This generates the Prisma Client with TypeScript types. No migration or seed needed!
-
-**Option B: Create Your Own Database**
-
-If you want your own Postgres instance:
-
-1. **Create a Postgres Database** (options):
-   - [Neon](https://neon.tech) (Free tier available)
-   - [Supabase](https://supabase.com) (Free tier available)
-   - Local Postgres installation
-
-2. **Update DATABASE_URL** in `.env` with your connection string
-
-3. **Generate Prisma Client**:
+1. **Generate Prisma Client**:
    ```bash
    npx prisma generate
    ```
 
-4. **Run Migrations**:
+2. **Create and seed the database** (creates 1000 influencers):
    ```bash
-   npx prisma migrate dev
-   ```
-
-5. **Seed the Database** (creates 1000 influencers):
-   ```bash
+   npx prisma db push
    npx prisma db seed
    ```
+
+That's it! The database file will be created at `prisma/dev.db`.
 
 ### 5. Run the Development Server
 
@@ -188,9 +184,10 @@ npx prisma migrate dev --name your_migration_name
 - Restart the dev server after changing `.env`
 
 ### "Can't reach database" errors
-- Using shared DB: Check your internet connection
-- Using own DB: Verify your `DATABASE_URL` is correct
-- Run `npx prisma db push` to sync schema
+- Verify your `DATABASE_URL` in `.env` is set to `"file:./dev.db"`
+- Run `npx prisma db push` to create/sync the database
+- Make sure the prisma directory exists and is writable
+- The database file will be created at `prisma/dev.db`
 
 ### "No results found" errors
 - Database Search: Make sure database is seeded (`npx prisma db seed`)
@@ -202,8 +199,9 @@ npx prisma migrate dev --name your_migration_name
 # Regenerate Prisma client
 npx prisma generate
 
-# Reset database (warning: deletes all data)
-npx prisma migrate reset
+# Reset database (warning: deletes all data and reseeds)
+npx prisma db push --force-reset
+npx prisma db seed
 ```
 
 ## Learn More

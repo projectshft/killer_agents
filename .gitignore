@@ -44,3 +44,7 @@ next-env.d.ts
 /data/approvals.db
 /data/approvals.db-shm
 /data/approvals.db-wal
+/prisma/dev.db
+/prisma/dev.db-shm
+/prisma/dev.db-wal
+/prisma/prisma/

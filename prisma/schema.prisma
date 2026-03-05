@@ -22,9 +22,9 @@ model InfluencerMetadata {
   tierId         String
   location       String
   primaryGenreId String
-  influencer     Influencer @relation(fields: [influencerId], references: [id], onDelete: Cascade)
-  primaryGenre   Genre      @relation(fields: [primaryGenreId], references: [id])
   tier           Tier       @relation(fields: [tierId], references: [id])
+  primaryGenre   Genre      @relation(fields: [primaryGenreId], references: [id])
+  influencer     Influencer @relation(fields: [influencerId], references: [id], onDelete: Cascade)
 
   @@index([tierId])
   @@index([location])
