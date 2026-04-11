@@ -1,263 +1,199 @@
-# Social Media Agent System
+# SQL Agent Assignment
 
-An AI-powered agent system for TikTok influencer marketing and trend research. Built with Next.js, Prisma, and Gemini AI.
+Build an agent that translates natural language queries into database queries using Prisma.
 
-## Overview
+## What You're Building
 
-This project demonstrates a multi-agent system that routes queries to specialized agents:
-- **Database Search Agent**: Query influencers by tier, genre, location, and price
-- **Trend Research Agent**: Research TikTok trends and content ideas
-- **YouTube Video Finder Agent** (Student Challenge): Find YouTube videos on any topic
+A database search agent that:
+1. Takes natural language: "Find fitness influencers in LA under $500"
+2. Extracts structured parameters using an LLM
+3. Builds a Prisma query
+4. Returns formatted results
 
-## Video Walkthrough
-
-[Live Walkthrough Video](https://share.descript.com/view/23ai09Rp381)
-
-## Prerequisites
-
-- Node.js 20.x or higher
-- Yarn or npm
-- API Keys (see setup below)
+```
+"Show me micro tier gaming creators"
+            │
+            ▼
+    ┌───────────────┐
+    │  LLM Extract  │
+    │  Parameters   │
+    └───────────────┘
+            │
+            ▼
+    tier: "micro"
+    genre: "gaming"
+            │
+            ▼
+    ┌───────────────┐
+    │ Build Prisma  │
+    │    Query      │
+    └───────────────┘
+            │
+            ▼
+    prisma.influencer.findMany({
+      where: {
+        metadata: {
+          tier: { name: "micro" },
+          primaryGenre: { name: "gaming" }
+        }
+      }
+    })
+```
 
 ## Quick Start
 
-### 1. Clone and Install
+### 1. Install Dependencies
 
 ```bash
-# Install dependencies
 yarn install
-# or
-npm install
 ```
 
 ### 2. Environment Setup
 
-Create a `.env` file in the root directory with the following keys:
+Create a `.env` file:
 
 ```env
-# Required: Get your Gemini API key
-GEMINI_API_KEY=your_gemini_key_here
+# Required: Gemini API key
+GEMINI_API_KEY=your_key_here
 
-# Required: Get your SerpAPI key for trend research
-SERP_API_KEY=your_serpapi_key_here
-
-# Database URL (shared for students - read-only access)
+# Database (shared read-only for this assignment)
 DATABASE_URL="postgresql://neondb_owner:npg_Rt2Mena8ZVwA@ep-billowing-shape-a4a0p4zw-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
 ```
 
-### 3. Get API Keys
+### 3. Get Gemini API Key
 
-#### Gemini API Key (Required)
 1. Go to [Google AI Studio](https://aistudio.google.com/app/apikey)
-2. Sign in with your Google account
-3. Click "Create API Key"
-4. Copy the key and paste it in your `.env` file as `GEMINI_API_KEY`
+2. Click "Create API Key"
+3. Copy to your `.env` file
 
-**Free Tier**: 60 requests per minute, sufficient for development and testing
+### 4. Generate Prisma Client
 
-#### SerpAPI Key (Required for Trend Research)
-1. Go to [SerpAPI](https://serpapi.com/)
-2. Sign up for a free account
-3. Navigate to your [Dashboard](https://serpapi.com/manage-api-key)
-4. Copy your API key and paste it in your `.env` file as `SERP_API_KEY`
-
-**Free Tier**: 100 searches per month
-
-### 4. Database Setup
-
-**Option A: Use Shared Database (Recommended for Workshop)**
-
-The `DATABASE_URL` provided above connects to a pre-seeded database with 1000 influencers.
-
-Simply run:
 ```bash
 npx prisma generate
 ```
 
-This generates the Prisma Client with TypeScript types. No migration or seed needed!
-
-**Option B: Create Your Own Database**
-
-If you want your own Postgres instance:
-
-1. **Create a Postgres Database** (options):
-   - [Neon](https://neon.tech) (Free tier available)
-   - [Supabase](https://supabase.com) (Free tier available)
-   - Local Postgres installation
-
-2. **Update DATABASE_URL** in `.env` with your connection string
-
-3. **Generate Prisma Client**:
-   ```bash
-   npx prisma generate
-   ```
-
-4. **Run Migrations**:
-   ```bash
-   npx prisma migrate dev
-   ```
-
-5. **Seed the Database** (creates 1000 influencers):
-   ```bash
-   npx prisma db seed
-   ```
-
-### 5. Run the Development Server
+### 5. Run Development Server
 
 ```bash
 yarn dev
-# or
-npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open [http://localhost:3000](http://localhost:3000)
 
-## Project Structure
+## Your Task
 
-```
-app/
-├── agents/
-│   ├── executeAgent.ts          # Main router agent
-│   ├── databaseSearchAgent.ts   # Database queries
-│   ├── trendResearchAgent.ts    # Trend research
-│   ├── videoFinderAgent.ts      # Student challenge (to implement)
-│   └── agentTypes.ts            # Type definitions
-├── libs/
-│   ├── gemini.ts                # Gemini AI client
-│   └── prisma.ts                # Database client
-├── actions.ts                   # Server actions
-└── page.tsx                     # Main UI
+Complete the `databaseSearchAgent` in `app/agents/databaseSearchAgent.ts`.
 
-prisma/
-├── schema.prisma                # Database schema
-└── seed.ts                      # Seed script
+### TODO 1: Define the Schema
+
+Define what parameters the LLM should extract:
+
+```typescript
+const sqlSchema = z.object({
+  price: z.number().optional().nullable(),
+  tier: z.string().optional().nullable(),
+  genre: z.string().optional().nullable(),
+  location: z.string().optional().nullable(),
+});
 ```
 
-## Using the Agents
+### TODO 2: Build WHERE Clause
 
-### Example Queries
+Convert extracted parameters to a Prisma WHERE clause:
 
-**Database Search**:
-- "Find micro influencers in beauty"
-- "Show me gaming influencers under $500"
-- "I need nano tier influencers in Los Angeles"
+```typescript
+const constructWhereClause = (sqlProps: SqlProps) => {
+  const whereClause: Prisma.InfluencerWhereInput = {};
 
-**Trend Research**:
-- "What are the latest TikTok dance trends?"
-- "Trending fitness content ideas"
-- "Popular hashtags for beauty campaigns"
+  if (sqlProps.genre) {
+    whereClause.metadata = {
+      primaryGenre: { name: sqlProps.genre }
+    };
+  }
 
-## Student Challenge: YouTube Video Finder Agent
+  // Add more conditions...
 
-See [TODOS.md](./TODOS.md) for a guided challenge to build a new agent.
+  return whereClause;
+};
+```
 
-**What you'll build**: An agent that finds YouTube videos on any topic using SerpAPI and Gemini AI.
+### TODO 3: Implement the Agent
+
+1. Get available genres from DB (for LLM context)
+2. Create a prompt asking Gemini to extract parameters
+3. Call Gemini with structured output
+4. Build WHERE clause from response
+5. Query database
+6. Format results
+
+## Test Queries
+
+Try these when your implementation is complete:
+
+- "Find fitness influencers in LA"
+- "Show me micro tier creators under $500"
+- "I need gaming influencers"
+- "Beauty creators in New York"
 
 ## Database Schema
 
-The database includes:
-- **1000 Influencers** with metadata (tier, genre, location)
-- **5 Tiers**: nano, micro, mid, macro, mega
-- **10 Genres**: pop, hiphop, rock, electronic, country, gaming, beauty, fitness, comedy, tech
-- **Pricing data** for different content types
+```
+Influencer
+├── name
+├── metadata (InfluencerMetadata)
+│   ├── location
+│   ├── primaryGenre → Genre (name)
+│   └── tier → Tier (name: nano/micro/mid/macro/mega)
+└── prices (InfluencerPrice[])
+    └── priceCents
+```
 
-### View Database
-
+Browse the data:
 ```bash
-# Open Prisma Studio to browse data
 npx prisma studio
 ```
 
-### Update Database Schema
+## Why This Matters: SQL vs Vector Search
 
-If you make changes to `prisma/schema.prisma`:
+This assignment teaches you when traditional database queries beat vector search.
 
-```bash
-# Generate Prisma client
-npx prisma generate
+| Use SQL When | Use Vectors When |
+|--------------|------------------|
+| Known schema with exact fields | Unstructured text (docs, articles) |
+| Exact filters (price < 500) | Semantic similarity ("angry customers") |
+| Aggregations (COUNT, AVG) | Fuzzy matching ("refund" → "return policy") |
+| Sorting/pagination | When you don't know exact terms |
 
-# Create and apply migration (if using your own DB)
-npx prisma migrate dev --name your_migration_name
+**Key insight**: For structured data with known schemas, SQL is faster, cheaper, and more precise than vector search.
+
+## SQL Injection: Why Prisma is Safe
+
+With Prisma, you never concatenate user input into SQL strings:
+
+```typescript
+// ❌ DANGEROUS - raw SQL
+const query = `SELECT * FROM users WHERE name = '${userInput}'`;
+
+// ✅ SAFE - Prisma parameterized queries
+const users = await prisma.user.findMany({
+  where: { name: userInput }
+});
 ```
+
+Prisma sends the query structure and values separately—user input is always treated as data, never as SQL code.
 
 ## Troubleshooting
 
-### "Invalid API Key" errors
-- Double-check your `GEMINI_API_KEY` and `SERP_API_KEY` in `.env`
-- Ensure there are no quotes around the keys
-- Restart the dev server after changing `.env`
+**"Invalid API Key"**: Check your `GEMINI_API_KEY` in `.env`
 
-### "Can't reach database" errors
-- Using shared DB: Check your internet connection
-- Using own DB: Verify your `DATABASE_URL` is correct
-- Run `npx prisma db push` to sync schema
+**"Can't reach database"**: The shared DB requires internet connection
 
-### "No results found" errors
-- Database Search: Make sure database is seeded (`npx prisma db seed`)
-- Trend Research: Check SERP_API_KEY is valid
-- Check console logs for detailed error messages
+**No results**: Check your WHERE clause logic matches the schema
 
-### Prisma Client errors
-```bash
-# Regenerate Prisma client
-npx prisma generate
+**Prisma errors**: Run `npx prisma generate` to regenerate the client
 
-# Reset database (warning: deletes all data)
-npx prisma migrate reset
-```
+## Resources
 
-## Learn More
-
-### Building Effective Agents
-Read Anthropic's guide on agent design patterns:
-[Building Effective Agents](https://www.anthropic.com/engineering/building-effective-agents)
-
-Key concepts covered:
-- Workflows vs Agents
-- When to use agents
-- Prompt engineering for agents
-- Structured outputs
-- Agent orchestration patterns
-
-### Technology Stack
-- [Next.js 16](https://nextjs.org/docs) - React framework
-- [Prisma](https://www.prisma.io/docs) - Database ORM
-- [Gemini AI](https://ai.google.dev/) - Language model
-- [Zod](https://zod.dev/) - Schema validation
-- [SerpAPI](https://serpapi.com/docs) - Search results API
-
-## Contributing
-
-This is an educational project. Feel free to:
-- Add new agents
-- Improve existing agents
-- Enhance the UI
-- Add more seed data
-
-## License
-
-MIT License - feel free to use this for learning and teaching!
-
----
-
-## Want to Go Deeper?
-
-If you enjoyed building this agent system and want to take your AI development skills to the next level, check out [Parsity's 30-Day AI Dev Cohort](https://parsity.io/AIDev).
-
-**What you'll learn:**
-- RAG (Retrieval-Augmented Generation) agents
-- LLM operations and deployment
-- Linear algebra fundamentals for ML
-- Model fine-tuning techniques
-
-**What you'll get:**
-- Live support and office hours
-- Build an amazing portfolio project or startup idea
-- Learn from experienced AI engineers
-- Join a community of web developers leveling up their AI skills
-
-Perfect for web developers who want to become AI engineers.
-
----
-
-**Built for learning about AI agents**
+- [Prisma Documentation](https://www.prisma.io/docs)
+- [Gemini AI Documentation](https://ai.google.dev/)
+- [Zod Schema Validation](https://zod.dev/)
